@@ -24,15 +24,9 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
     private static final Logger LOGGER = LoggerFactory.getLogger(Game.class);
 
 
-    public static final int TIMEOUT = 30 * 1000; // 30 seconds
-    public static final int DELAY = 5 * 1000; // 5 seconds
-    public static final int MIN_NUMBER_OF_PLAYERS = 3;
-
     private String id;
 
     private Circle<Player> players;
-    private Deck<String, Card> questionDeck;
-    private Deck<String, Card> answerDeck;
 
     private Round currentRound;
 
@@ -41,60 +35,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
 
     private GameEventListener eventListener;
 
-    /**
-     * Creates an empty game
-     */
-    public Game() {
-        this.id = "";
-        this.players = new Circle<>();
-        this.questionDeck = new Deck<>();
-        this.answerDeck = new Deck<>();
-        this.currentRound = null;
-        this.started = false;
-        this.resumed = false;
-        this.eventListener = null;
-    }
 
-    /**
-     * Creates a new Game object
-     * @param id the id of the game
-     * @param questions the game card questions
-     * @param answers the game card answers
-     */
-    public Game(String id, Iterable<Card> questions, Iterable<Card> answers) {
-        this();
-        this.id = id;
-        this.questionDeck = new Deck<>(questions);
-        this.answerDeck = new Deck<>(answers);
-        questionDeck.shuffle();
-        answerDeck.shuffle();
-    }
-
-    /**
-     * Creates a new Game object
-     * @param id the id of the game
-     * @param questions the game card questions as stream
-     * @param answers the game card answers as stream
-     */
-    public Game(String id, Stream<Card> questions, Stream<Card> answers) {
-        this();
-        this.id = id;
-        this.questionDeck = new Deck<>(questions);
-        this.answerDeck = new Deck<>(answers);
-    }
-
-    /**
-     * Creates a new Game object
-     * @param id the id of the game
-     * @param questions the list of string questions
-     * @param answers the list of string answers
-     */
-    public Game(String id, List<String> questions, List<String> answers) {
-        this(id,
-            IntStream.range(0, questions.size()).mapToObj(index -> new Card(id + "@q" + index, questions.get(index))),
-            IntStream.range(0, answers.size()).mapToObj(index -> new Card(id + "@a" + index, answers.get(index)))
-        );
-    }
 
     /**
      * Checks if a given id is identical to the identifiable object id
@@ -157,34 +98,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      * @return true if player is successfully added
      */
     public boolean onConnectionCreate(Player player) {
-        if (answerDeck.size() < Player.NUMBER_OF_CARDS) // if there are not enough cards
-            return false;
 
-        player.setPlayerEventListener(this);
-
-        if (player.isConnected()) { // if connection is successful
-            // get the player initial cards
-            Card[] cards = new Card[Player.NUMBER_OF_CARDS];
-            for (int i = 0; i < cards.length; i++) {
-                cards[i] = answerDeck.pickTopCard().orElseThrow(); // will not throw
-            }
-
-            player.setCards(cards);
-
-            if (players.count(Player::isConnected) == 0)
-                player.makeAdmin();
-
-            players.addEntry(player);
-            player.broadcast(BroadcastContext.INIT, "id", player.getId(), "isAdmin", player.isAdmin(), "game", id, "players", players.asList(Player::getNickname));
-            broadcastAll(BroadcastContext.PLAYER_JOINED, "count", players.count(Player::isConnected), "joined", player.getNickname(), "joinedId", player.getId());
-
-            if(resumed)
-                player.broadcast(BroadcastContext.JOINED_MID_GAME);
-            if (started && !resumed)
-                player.broadcast(BroadcastContext.GAME_PAUSED, new HashMap<>());
-
-            return true;
-        }
 
         return false;
     }
@@ -204,30 +118,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     public boolean onConnectionResume(Player player) {
 
-        if (!players.has(player) || !player.isConnected())
-            return false;
 
-        player.broadcast(BroadcastContext.REJOIN, "newId", player.getId(), "game", id, "players", players.asList(Player::getNickname));
-
-        // ensure admin exists
-        if (players.find(Player::isAdmin).isEmpty())
-            player.makeAdmin();
-
-        if(resumed)
-            player.broadcast(BroadcastContext.JOINED_MID_GAME, new HashMap<>());
-        if (started && !resumed) // waiting for other players to resume connection
-            player.broadcast(BroadcastContext.GAME_PAUSED, new HashMap<>());
-
-        int newPlayerCount = players.count(Player::isConnected);
-
-        broadcastAll(BroadcastContext.CONNECTION_RESUME, "count", newPlayerCount, "from", player.getOldId(), "to", player.getId());
-
-        if (started) {
-            currentRound.setNumberOfParticipants(newPlayerCount);
-
-            if (!resumed && newPlayerCount >= 3)
-                onResume();
-        }
         return true;
     }
 
