@@ -4,7 +4,7 @@ import com.partydeck.server.models.CardAreas.Equitment;
 import com.partydeck.server.models.CardAreas.Judge;
 import com.partydeck.server.models.WarLords.whiteWarLord;
 import com.partydeck.server.models.events.PlayerEventListener;
-import com.partydeck.server.models.helpers.Card;
+import com.partydeck.server.models.CardsLibrary.Card;
 import com.partydeck.server.models.helpers.Identifiable;
 import com.partydeck.server.models.skills.baseSkill;
 

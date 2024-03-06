@@ -1,5 +1,6 @@
 package com.partydeck.server.models;
 
+import com.partydeck.server.models.CardsLibrary.CardsLibrary;
 import com.partydeck.server.models.iterable.Circle;
 import com.partydeck.server.models.iterable.Deck;
 import com.partydeck.server.models.events.PlayerEventListener;
@@ -19,22 +20,32 @@ import java.util.stream.StreamSupport;
  * @author Itay Schechner
  * @version 1.0
  */
-public class Game implements PlayerEventListener, RoundEventListener, Identifiable<String> {
+public class Game implements PlayerEventListener, RoundEventListener, Identifiable<String>, Runnable{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Game.class);
 
 
     private String id;
+    private int game_players_num;
 
     private Circle<Player> players;
+    private String message;
 
     private Round currentRound;
 
     private boolean started;
     private boolean resumed;
 
+    private CardsLibrary CardsHeap;
+
     private GameEventListener eventListener;
 
+
+
+    @Override
+    public void run(){
+
+    }
 
 
     /**
@@ -82,14 +93,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
 
     private void broadcastAll(BroadcastContext context, Object... args) {
-        Map<String, Object> argsMap = new HashMap<>();
-        for (int i = 0; i < args.length - 1; i+=2) {
-            if (args[i] instanceof String)
-                argsMap.put((String) args[i], args[i + 1]);
-        }
-        for (Player player: players) {
-            player.broadcast(context, argsMap);
-        }
+
     }
 
     /**
@@ -141,22 +145,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     @Override
     public void onStartRequest(Player player) {
-        int playerCount = players.count(Player::isConnected);
-        if (player.isAdminOf(this) && playerCount >= MIN_NUMBER_OF_PLAYERS) { // if the start request was valid
 
-            if (eventListener != null)
-                eventListener.onGameStart(id);
-
-            broadcastAll(BroadcastContext.GAME_STARTED, "dispatched", "start");
-
-            started = true;
-            resumed = true;
-            currentRound = new Round();
-            currentRound.setRoundEventListener(this);
-            currentRound.setNumberOfParticipants(playerCount);
-            currentRound.start();
-
-        }
     }
 
     /**
@@ -164,24 +153,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     @Override
     public void onRoundStart() {
-        Optional<Player> judgeOpt = players.circleAndFind(Player::isConnected);
-        if (!started || !resumed || judgeOpt.isEmpty())
-            return;
 
-        Optional<Card> questionOpt = questionDeck.pickTopCard();
-
-        if (questionOpt.isEmpty()) {
-            onStop();
-            return;
-        }
-
-        Player judge = judgeOpt.get();
-        Card question = questionOpt.get();
-
-        judge.setJudge(true);
-        currentRound.setJudge(judge);
-        currentRound.setNumberOfParticipants(players.count(Player::isConnected)); // update this in case a player joined mid-game
-        broadcastAll(BroadcastContext.ROUND_STARTED, "j", judge.getNickname(), "q", question.getContent());
     }
 
     /**
@@ -193,10 +165,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     @Override
     public Card onCardUse(Card card, Player player) {
-        answerDeck.insertCardInBottom(card);
-        currentRound.recordUse(card, player);
-        broadcastAll(BroadcastContext.PLAYER_USAGE, "playerId", player.getId(), "playerName", player.getNickname());
-        return answerDeck.pickTopCard().orElseThrow(); // there must be a card here since it was recently inserted
+
     }
 
     /**
@@ -206,9 +175,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     @Override
     public void onSkipRequest(Player player) {
-        if (player.isAdminOf(this)) {
-            currentRound.emitSkip();
-        }
+
     }
 
     /**
@@ -219,7 +186,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     @Override
     public void onOptionsReady(Iterable<Card> options, Player judge) {
-        broadcastAll(BroadcastContext.PICK, "pick", options);
+
     }
 
     /**
@@ -230,17 +197,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     @Override
     public void onJudgePick(String cardId, Player judge) {
-        if (judge.isJudgeOf(this)) {
-            try {
-                Player winner = currentRound.getWinner(cardId).orElseThrow();
-                winner.incrementRoundsWon();
-                broadcastAll(BroadcastContext.ROUND_ENDED, "winningCard", cardId, "playerWon", winner.getNickname());
-            } catch (Exception e) {
-                broadcastAll(BroadcastContext.ROUND_ENDED_404, "playerWon", "nobody");
-            } finally {
-                judge.setJudge(false);
-            }
-        }
+
     }
 
     /**
@@ -250,8 +207,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     @Override
     public void onUnexpectedRoundEnd(Player judge) {
-        broadcastAll(BroadcastContext.ROUND_ENDED_404, "playerWon", "nobody");
-        judge.setJudge(false);
+
     }
 
     /**
@@ -261,14 +217,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     @Override
     public void onNextRoundRequest(Player player) {
-        LOGGER.info("Requesting for next round" + resumed + started + questionDeck.hasNext());
-        if (player.isAdminOf(this)) {
-            currentRound.clear();
-            if (questionDeck.hasNext() && started)
-                currentRound.start();
-            else
-                onStop();
-        }
+
     }
 
     /**
@@ -277,9 +226,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     @Override
     public void onStopRequest(Player player) {
-        if (player.isAdminOf(this)) {
-            onStop();
-        }
+
     }
 
     /*
@@ -296,46 +243,17 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
     @Override
     public void onConnectionPause(Player player) {
 
-        int newPlayerCount = players.count(Player::isConnected);
-
-        if (currentRound != null)
-            currentRound.setNumberOfParticipants(newPlayerCount);
-
-        if (player.isAdminOf(this)) {
-            player.demoteToPlayer();
-            players.find(Player::isConnected).ifPresent(Player::makeAdmin);
-        }
-
-        broadcastAll(BroadcastContext.CONNECTION_PAUSE, "count", newPlayerCount);
-
-        // handle onPause
-        if (started && newPlayerCount < 3) // game should pause
-            onPause();
     }
 
     /**
      * Fires when the game has started and there are less than 3 players in the game
      */
     private void onPause() {
-        this.resumed = false;
-        broadcastAll(BroadcastContext.GAME_PAUSED);
-
-        if (eventListener != null)
-            eventListener.onGamePause(id);
-
-        if (currentRound != null) // emit full skip, wait for admin to press "next" or "end game"
-            currentRound.emitFullSkip();
 
     }
 
     private void onStop() {
-        this.started = false;
-        this.resumed = false;
-        List<ScoreboardRow> scores = new ArrayList<>();
-        for (Player player: players)
-            scores.add(new ScoreboardRow(player));
-        broadcastAll(BroadcastContext.GAME_ENDED, "scores", scores.stream().sorted().collect(Collectors.toList()));
-        onDestroy();
+
     }
 
     /**
@@ -345,25 +263,10 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     @Override
     public void onConnectionDestroy(Player player) {
-        players.removeEntry(player);
-
-        broadcastAll(BroadcastContext.PLAYER_LEFT, "left", player.getNickname(), "leftId", player.getId());
-
-        // return player cards
-        Arrays.stream(player.currentCards).forEach(answerDeck::insertCardInBottom);
-        player.currentCards = new Card[] {};
-
-        if ((started && players.size() < 3) || players.size() == 0) {
-            broadcastAll(BroadcastContext.GAME_INTERRUPTED);
-            onDestroy();
-        }
 
     }
 
     public void onDestroy() {
-        for (Player player: players)
-            player.destroyConnection();
-        if (eventListener != null)
-            eventListener.onGameDestroy(id);
+
     }
 }
