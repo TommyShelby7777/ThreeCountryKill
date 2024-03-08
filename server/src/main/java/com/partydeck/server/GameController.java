@@ -27,7 +27,7 @@ public class GameController {
     @PostMapping("/create")
     public CreateGameResponse createGame(@RequestBody CreateGameRequest request) {
         try {
-            String code = gameService.createGame(request.getQuestions(), request.getAnswers());
+            String code = gameService.createGame(request.getGame_players_num());
             return new CreateGameResponse(code, 201);
         } catch (StackOverflowError e) {
             throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not generate game id");
@@ -50,28 +50,17 @@ public class GameController {
 
     public static class CreateGameRequest {
 
-        private List<String> questions;
-        private List<String> answers;
+        private int game_players_num;
 
-        public CreateGameRequest(List<String> questions, List<String> answers) {
-            this.questions = questions;
-            this.answers = answers;
+        public CreateGameRequest(int game_players_num) {
+            this.game_players_num = game_players_num;
         }
 
-        public List<String> getQuestions() {
-            return questions;
+        public int getGame_players_num() {
+            return game_players_num;
         }
-
-        public void setQuestions(List<String> questions) {
-            this.questions = questions;
-        }
-
-        public List<String> getAnswers() {
-            return answers;
-        }
-
-        public void setAnswers(List<String> answers) {
-            this.answers = answers;
+        public int setGame_players_num(int game_players_num){
+            this.game_players_num = game_players_num;
         }
     }
     public static class CreateGameResponse {

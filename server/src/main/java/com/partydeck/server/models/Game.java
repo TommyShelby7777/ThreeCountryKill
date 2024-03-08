@@ -40,6 +40,15 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
 
     private GameEventListener eventListener;
 
+    public Game(){
+        this.id = "";
+        this.players = new Circle<>();
+        this.game_players_num = -1;
+        this.message = null;
+        this.started = false;
+        this.resumed = false;
+        this.eventListener = null;
+    }
 
 
     @Override
@@ -102,7 +111,20 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      * @return true if player is successfully added
      */
     public boolean onConnectionCreate(Player player) {
+        player.setEventListener(this);
 
+        if(player.isConnected()){
+            players.addEntry(player);
+
+            player.broadcast(BroadcastContext.INIT, "id", player.getId(), "isAdmin", player.isAdmin(), "game", id, "players", players.asList(Player::getNickname));
+            broadcastAll(BroadcastContext.PLAYER_JOINED, "count", players.count(Player::isConnected), "joined", player.getNickname(), "joinedId", player.getId());
+
+            if(resumed)
+                player.broadcast(BroadcastContext.JOINED_MID_GAME);
+            if (started && !resumed)
+                player.broadcast(BroadcastContext.GAME_PAUSED, new HashMap<>());
+            return true;
+        }
 
         return false;
     }

@@ -4,7 +4,7 @@ public class Equitment {
     public Weapon weapon;
     public Armor armor;
     public Mount mount;
-    Equitment(){
+    public Equitment(){
         this.weapon = new Weapon();
         this.armor = new Armor();
         this.mount = new Mount();

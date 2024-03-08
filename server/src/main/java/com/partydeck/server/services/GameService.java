@@ -34,9 +34,9 @@ public class GameService {
      * @param answers the list of answers
      * @return the code of the newly created game
      */
-    public String createGame(List<String> questions, List<String> answers) {
+    public String createGame(int game_players_num) {
         String uniqueGameCode = generator.generate(gameRepository::hasGame);
-        gameRepository.createGame(uniqueGameCode, questions, answers);
+        gameRepository.createGame(uniqueGameCode, game_players_num);
         scheduler.schedule(removeGameIfEmpty(uniqueGameCode), REMOVE_EMPTY_GAME_DELAY, TimeUnit.MINUTES);
         return uniqueGameCode;
     }

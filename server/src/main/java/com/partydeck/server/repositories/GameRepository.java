@@ -52,8 +52,8 @@ public class GameRepository implements GameEventListener {
      * @param questions the questions of the game
      * @param answers the answers of the game
      */
-    public void createGame(String id, List<String> questions, List<String> answers) {
-        Game game = new Game(id, questions, answers);
+    public void createGame(String id, int game_players_num) {
+        Game game = new Game(id, game_players_num);
         game.setGameEventListener(this);
         games.put(id, game);
     }
