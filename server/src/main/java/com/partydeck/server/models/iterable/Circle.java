@@ -36,6 +36,10 @@ public class Circle<T extends Identifiable<String>> implements Iterable<T> {
     public int count(Function<T,Boolean> condition){
         return (int) circle.stream().filter(condition::apply).count();
     }
+
+    public int size(){
+        return circle.size();
+    }
     @Override
     public Iterator<T> iterator() {
         return circle.iterator();

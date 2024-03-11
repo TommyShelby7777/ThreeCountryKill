@@ -61,6 +61,7 @@ public class GameController {
         }
         public int setGame_players_num(int game_players_num){
             this.game_players_num = game_players_num;
+            return this.game_players_num;
         }
     }
     public static class CreateGameResponse {

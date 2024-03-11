@@ -5,7 +5,7 @@ import com.partydeck.server.models.iterable.Circle;
 import com.partydeck.server.models.iterable.Deck;
 import com.partydeck.server.models.events.PlayerEventListener;
 import com.partydeck.server.models.events.RoundEventListener;
-import com.partydeck.server.models.helpers.*;
+import com.partydeck.server.models.CardsLibrary.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,10 +44,17 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
         this.id = "";
         this.players = new Circle<>();
         this.game_players_num = -1;
-        this.message = null;
+        this.message = "";
         this.started = false;
         this.resumed = false;
         this.eventListener = null;
+        this.CardsHeap = new CardsLibrary();
+    }
+
+    public Game(String id,int game_players_num){
+        this();
+        this.id = id;
+        this.game_players_num = game_players_num;
     }
 
 
@@ -114,6 +121,9 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
         player.setEventListener(this);
 
         if(player.isConnected()){
+            if(players.count(Player::isAdmin)==0){
+                player.makeAdmin();
+            }
             players.addEntry(player);
 
             player.broadcast(BroadcastContext.INIT, "id", player.getId(), "isAdmin", player.isAdmin(), "game", id, "players", players.asList(Player::getNickname));
@@ -187,7 +197,7 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     @Override
     public Card onCardUse(Card card, Player player) {
-
+        return card;
     }
 
     /**
@@ -290,5 +300,11 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
 
     public void onDestroy() {
 
+    }
+
+    public boolean isMessageNull(){
+        if(message.isEmpty()){
+
+        }
     }
 }
