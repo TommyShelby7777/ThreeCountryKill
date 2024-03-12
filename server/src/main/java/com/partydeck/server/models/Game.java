@@ -1,26 +1,22 @@
 package com.partydeck.server.models;
 
 import com.partydeck.server.models.CardsLibrary.CardsLibrary;
+import com.partydeck.server.models.Enums.BroadcastContext;
+import com.partydeck.server.models.helpers.Identifiable;
 import com.partydeck.server.models.iterable.Circle;
-import com.partydeck.server.models.iterable.Deck;
 import com.partydeck.server.models.events.PlayerEventListener;
-import com.partydeck.server.models.events.RoundEventListener;
 import com.partydeck.server.models.CardsLibrary.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * An object representing the game
  * @author Itay Schechner
  * @version 1.0
  */
-public class Game implements PlayerEventListener, RoundEventListener, Identifiable<String>, Runnable{
+public class Game implements PlayerEventListener, Identifiable<String>, Runnable{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Game.class);
 
@@ -30,8 +26,6 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
 
     private Circle<Player> players;
     private String message;
-
-    private Round currentRound;
 
     private boolean started;
     private boolean resumed;
@@ -166,11 +160,14 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
 
         // in order for a game to be resumed, it has to be started, and therefore the current round != null.
         resumed = true;
-        currentRound.clear();
-        currentRound.start();
+
 
     }
 
+    @Override
+    public void onGameStartRequest(){
+
+    }
     /**
      * Fires when the admin requests to start the game
      * @param player the player who asked to start
@@ -178,26 +175,6 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
     @Override
     public void onStartRequest(Player player) {
 
-    }
-
-    /**
-     * Fires every time a new round is created
-     */
-    @Override
-    public void onRoundStart() {
-
-    }
-
-    /**
-     * Fires every time a player uses a card
-     *
-     * @param card   the card used
-     * @param player the player that used the card
-     * @return the new card to be added
-     */
-    @Override
-    public Card onCardUse(Card card, Player player) {
-        return card;
     }
 
     /**
@@ -210,15 +187,9 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
 
     }
 
-    /**
-     * Fires when all of the options are ready
-     *
-     * @param options the options picked by the players
-     * @param judge   the current judge
-     */
     @Override
-    public void onOptionsReady(Iterable<Card> options, Player judge) {
-
+    public Card onCardUse(com.partydeck.server.models.helpers.Card card, Player player) {
+        return null;
     }
 
     /**
@@ -229,16 +200,6 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
      */
     @Override
     public void onJudgePick(String cardId, Player judge) {
-
-    }
-
-    /**
-     * Fires when a round is unexpectedly ended
-     *
-     * @param judge the judge of the round
-     */
-    @Override
-    public void onUnexpectedRoundEnd(Player judge) {
 
     }
 
@@ -303,8 +264,6 @@ public class Game implements PlayerEventListener, RoundEventListener, Identifiab
     }
 
     public boolean isMessageNull(){
-        if(message.isEmpty()){
-
-        }
+        return message.isEmpty();
     }
 }

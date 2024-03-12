@@ -8,14 +8,7 @@ import com.partydeck.server.models.helpers.Card;
  */
 public interface PlayerEventListener {
 
-    /**
-     * Fires every time a player uses a card
-     * @param card the card used
-     * @param player the player that used the card
-     * @return the new card to be added
-     */
-    Card onCardUse(Card card, Player player);
-
+    void onGameStartRequest();
     /**
      * Fires every time a judge picks a card
      * @param cardId the picked card id

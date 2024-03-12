@@ -2,7 +2,7 @@ package com.partydeck.server.repositories;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.partydeck.server.models.BroadcastContext;
+import com.partydeck.server.models.Enums.BroadcastContext;
 import com.partydeck.server.models.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
