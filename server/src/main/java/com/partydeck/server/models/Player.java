@@ -2,18 +2,17 @@ package com.partydeck.server.models;
 
 import com.partydeck.server.models.CardAreas.Equitment;
 import com.partydeck.server.models.CardAreas.Judge;
+import com.partydeck.server.models.Enums.BroadcastContext;
 import com.partydeck.server.models.Enums.IdentityType;
 import com.partydeck.server.models.WarLords.whiteWarLord;
 import com.partydeck.server.models.events.PlayerEventListener;
 import com.partydeck.server.models.CardsLibrary.Card;
 import com.partydeck.server.models.helpers.Identifiable;
-import com.partydeck.server.models.skills.baseSkill;
 import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * A class representing a player object
@@ -86,9 +85,21 @@ public abstract class Player implements Identifiable<String> {
 
     public abstract boolean isConnected();
 
+    protected void handleGameStartRequest(){
+        this.eventListener.onGameStartRequest();
+    }
+
+    protected void handleMessage(BroadcastContext context,Map<String,Object> data) throws UnsupportedOperationException{
+        switch(context){
+            case GAME_START:
+                handleGameStartRequest();
+                break;
+        }
+    }
+
     public abstract void broadcast(Map<String,Object> args);
 
-    public void broadcast(BroadcastContext context,Map<String,Object> args){
+    public void broadcast(BroadcastContext context, Map<String,Object> args){
         args.put("context",context.toString());
         switch(context){
             case PLAYER_JOINED:
