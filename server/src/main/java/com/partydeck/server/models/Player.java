@@ -54,7 +54,7 @@ public abstract class Player implements Identifiable<String> {
     //选用的武将
     protected whiteWarLord warLord;
 
-    protected PlayerEventListener eventListener;
+    protected Game eventListener;
 
     public Player(){
         this.id = "";

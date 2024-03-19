@@ -2,6 +2,8 @@ package com.partydeck.server.models;
 
 import com.partydeck.server.models.CardsLibrary.CardsLibrary;
 import com.partydeck.server.models.Enums.BroadcastContext;
+import com.partydeck.server.models.Enums.IdentityType;
+import com.partydeck.server.models.WarLords.WarLordsLibrary;
 import com.partydeck.server.models.helpers.Identifiable;
 import com.partydeck.server.models.iterable.Circle;
 import com.partydeck.server.models.events.PlayerEventListener;
@@ -9,6 +11,7 @@ import com.partydeck.server.models.CardsLibrary.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -32,7 +35,11 @@ public class Game implements PlayerEventListener, Identifiable<String>, Runnable
 
     private CardsLibrary CardsHeap;
 
+    private WarLordsLibrary WarLordsHeap;
+
     private GameEventListener eventListener;
+
+    private String Lord_id;
 
     public Game(){
         this.id = "";
@@ -133,12 +140,7 @@ public class Game implements PlayerEventListener, Identifiable<String>, Runnable
         return false;
     }
 
-    /*
-     * The actual game methods:
-     *  game start, resume
-     *  round start, end, skip, next
-     *  player events
-     */
+
 
 
     /**
@@ -166,7 +168,18 @@ public class Game implements PlayerEventListener, Identifiable<String>, Runnable
 
     @Override
     public void onGameStartRequest(){
+        //分配身份
+        IdentityType[] Identity = IdentityType.values();
+        Collections.shuffle(Arrays.asList(Identity));
+        for(int i=0;i<Identity.length;i++){
+            players.getByindex(i).setIdentity(Identity[i]);
+        }
 
+        //创建牌堆 洗牌
+        CardsHeap = new CardsLibrary();
+        CardsHeap.shuffle();
+        WarLordsHeap = new WarLordsLibrary();
+        WarLordsHeap.shuffle();
     }
     /**
      * Fires when the admin requests to start the game
@@ -187,10 +200,6 @@ public class Game implements PlayerEventListener, Identifiable<String>, Runnable
 
     }
 
-    @Override
-    public Card onCardUse(com.partydeck.server.models.helpers.Card card, Player player) {
-        return null;
-    }
 
     /**
      * Fires every time a judge picks a card

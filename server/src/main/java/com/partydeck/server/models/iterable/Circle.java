@@ -44,4 +44,8 @@ public class Circle<T extends Identifiable<String>> implements Iterable<T> {
     public Iterator<T> iterator() {
         return circle.iterator();
     }
+
+    public T getByindex(int index){
+        return circle.get(index);
+    }
 }
